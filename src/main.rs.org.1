@@ -11,7 +11,6 @@ mod db;
 mod error;
 mod handlers;
 mod models;
-mod routes; // 모듈 임포트
 
 use db::create_pool;
 use handlers::*;
@@ -21,7 +20,13 @@ async fn main() -> Result<(), sqlx::Error> {
     dotenv().ok();
     let pool = create_pool().await?;
 
-    let app = routes::create_routes().layer(Extension(pool)); // 라우트를 앱에 추가
+    let app = Router::new()
+        .route("/books", get(get_books).post(create_book))
+        .route(
+            "/books/{id}",
+            get(get_book).put(update_book).delete(delete_book),
+        )
+        .layer(Extension(pool));
 
     println!("서버가 0.0.0.0:3000에서 시작됩니다...");
 
