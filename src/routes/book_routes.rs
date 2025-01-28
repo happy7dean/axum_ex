@@ -8,7 +8,7 @@ pub fn create_routes() -> Router {
     Router::new()
         .route("/books", get(get_books).post(create_book))
         .route(
-            "/books/:id",
+            "/books/{id}",
             get(get_book).put(update_book).delete(delete_book),
         )
 }

@@ -8,7 +8,7 @@ pub fn create_routes() -> Router {
     Router::new()
         .route("/users", get(get_users).post(create_user))
         .route(
-            "/users/:id",
+            "/users/{id}",
             get(get_user).put(update_user).delete(delete_user),
         )
 }
