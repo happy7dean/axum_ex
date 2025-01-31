@@ -1,17 +1,20 @@
 use axum::{
-    http::StatusCode,
-    response::{Response, Result},
-    routing::{delete, get, post, put},
-    Extension, Json, Router,
+    // http::StatusCode,
+    response::Result,
+    // response::{Response, Result},
+    // routing::{delete, get, post, put},
+    Extension, 
+    // Json, Router,
 };
 use dotenv::dotenv;
-use std::{env, io};
+// use std::{env, io};
 
 mod db;
 mod error;
 mod handlers;
 mod models;
-mod routes; // 모듈 임포트
+mod routes;
+mod utils; // 모듈 임포트
 
 use db::create_pool;
 //use handlers::*;

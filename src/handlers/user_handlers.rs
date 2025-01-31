@@ -1,5 +1,6 @@
 use crate::error::AppError;
 use crate::models::user_models::{CreateUser, User};
+use crate::utils::passwd::passwd_hash;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{extract::Path, Extension, Json};
@@ -14,14 +15,18 @@ pub async fn create_user(
             "이름과 이메일은 필수 항목입니다.".into(),
         ));
     }
+    // 비밀번호 암호화
+    let passwd = passwd_hash(&payload.passwd);
+
     // 트랜젝션
     // let mut tx = pool.begin().await?;
     let rec = query_as::<_, User>(
-        "INSERT INTO users (name, email, passwd) VALUES ($1, $2, $3) RETURNING id, name, email, passwd",
+        "INSERT INTO users (name, email, passwd, salt_key) VALUES ($1, $2, $3, $4) RETURNING id, name, email, passwd",
     )
     .bind(&payload.name)
     .bind(&payload.email)
-    .bind(&payload.passwd)
+    .bind(&passwd.wd)
+    .bind(&passwd.salt)
     .fetch_one(&pool)
     .await?;
     Ok((StatusCode::CREATED, Json(rec)))

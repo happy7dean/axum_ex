@@ -1,6 +1,11 @@
 use crate::handlers::user_handlers::{create_user, delete_user, get_user, get_users, update_user};
 use axum::{
-    routing::{get, post},
+    routing::{
+        get, 
+        // post,
+        // put,
+        // delete,
+    },
     Router,
 }; // 적절한 핸들러 임포트
 
