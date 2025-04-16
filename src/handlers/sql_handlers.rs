@@ -1,72 +1,44 @@
+use crate::db::connection_manager::ConnectionManager;
+use crate::db::connection::Connection;
 use crate::error::AppError;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row, Column, TypeInfo};
-use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 pub struct SqlQuery {
     pub query: String,
+    pub connection_id: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct QueryResult {
-    pub columns: Vec<String>,
-    pub rows: Vec<HashMap<String, serde_json::Value>>,
+    pub rows: Vec<serde_json::Value>,
 }
 
+#[axum::debug_handler]
 pub async fn execute_sql(
-    Extension(pool): Extension<PgPool>,
+    Extension(manager): Extension<ConnectionManager>,
     Json(payload): Json<SqlQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    // Get the connection for the given ID
+    let connection = manager
+        .get_connection(&payload.connection_id)
+        .await
+        .ok_or_else(|| AppError::validation_error("Invalid connection ID".into()))?;
+
     // Validate that the query is a SELECT statement
     if !payload.query.trim().to_uppercase().starts_with("SELECT") {
-        return Err(AppError::ValidationError(
+        return Err(AppError::validation_error(
             "Only SELECT queries are allowed".into(),
         ));
     }
 
     // Execute the query
-    let rows = sqlx::query(&payload.query)
-        .fetch_all(&pool)
-        .await?;
+    let results = connection
+        .execute_query(&payload.query)
+        .await
+        .map_err(|e| AppError::database_error(e.to_string()))?;
 
-    // Get column names
-    let columns: Vec<String> = if let Some(row) = rows.first() {
-        row.columns()
-            .iter()
-            .map(|col| col.name().to_string())
-            .collect()
-    } else {
-        Vec::new()
-    };
-
-    // Convert rows to JSON
-    let mut result_rows = Vec::new();
-    for row in rows {
-        let mut row_map = HashMap::new();
-        for (i, column) in columns.iter().enumerate() {
-            let value = match row.try_get::<i32, _>(i) {
-                Ok(v) => serde_json::Value::Number(v.into()),
-                Err(_) => match row.try_get::<String, _>(i) {
-                    Ok(v) => serde_json::Value::String(v),
-                    Err(_) => match row.try_get::<bool, _>(i) {
-                        Ok(v) => serde_json::Value::Bool(v),
-                        Err(_) => match row.try_get::<f64, _>(i) {
-                            Ok(v) => serde_json::Value::Number(serde_json::Number::from_f64(v).unwrap_or(0.into())),
-                            Err(_) => serde_json::Value::Null,
-                        },
-                    },
-                },
-            };
-            row_map.insert(column.clone(), value);
-        }
-        result_rows.push(row_map);
-    }
-
-    Ok(Json(QueryResult {
-        columns,
-        rows: result_rows,
-    }))
+    Ok(Json(QueryResult { rows: results }))
 } 

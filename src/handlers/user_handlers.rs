@@ -11,7 +11,7 @@ pub async fn create_user(
     Json(payload): Json<CreateUser>,
 ) -> Result<impl IntoResponse, AppError> {
     if payload.name.is_empty() || payload.email.is_empty() {
-        return Err(AppError::ValidationError(
+        return Err(AppError::validation_error(
             "이름과 이메일은 필수 항목입니다.".into(),
         ));
     }
@@ -57,7 +57,7 @@ pub async fn update_user(
     Json(payload): Json<User>,
 ) -> Result<impl IntoResponse, AppError> {
     if payload.name.is_empty() || payload.email.is_empty() {
-        return Err(AppError::ValidationError(
+        return Err(AppError::validation_error(
             "제목과 저자는 필수 항목입니다.".into(),
         ));
     }
@@ -84,7 +84,7 @@ pub async fn delete_user(
         .await?;
 
     if result.rows_affected() == 0 {
-        return Err(AppError::DataNotFoundError("책을 찾을 수 없습니다.".into()));
+        return Err(AppError::validation_error("책을 찾을 수 없습니다.".into()));
     }
 
     Ok(StatusCode::NO_CONTENT)

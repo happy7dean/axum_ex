@@ -10,7 +10,7 @@ pub async fn create_book(
     Json(payload): Json<CreateBook>,
 ) -> Result<impl IntoResponse, AppError> {
     if payload.title.is_empty() || payload.author.is_empty() {
-        return Err(AppError::ValidationError(
+        return Err(AppError::validation_error(
             "제목과 저자는 필수 항목입니다.".into(),
         ));
     }
@@ -51,7 +51,7 @@ pub async fn update_book(
     Json(payload): Json<CreateBook>,
 ) -> Result<impl IntoResponse, AppError> {
     if payload.title.is_empty() || payload.author.is_empty() {
-        return Err(AppError::ValidationError(
+        return Err(AppError::validation_error(
             "제목과 저자는 필수 항목입니다.".into(),
         ));
     }
@@ -77,7 +77,7 @@ pub async fn delete_book(
         .await?;
 
     if result.rows_affected() == 0 {
-        return Err(AppError::DataNotFoundError("책을 찾을 수 없습니다.".into()));
+        return Err(AppError::validation_error("책을 찾을 수 없습니다.".into()));
     }
 
     Ok(StatusCode::NO_CONTENT)

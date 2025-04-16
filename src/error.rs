@@ -1,29 +1,44 @@
-use axum::response::{IntoResponse, Response};
-use axum::{http::StatusCode, Json};
-use serde_json::json;
-use thiserror::Error;
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 
-#[derive(Error, Debug)]
-pub enum AppError {
-    #[error("데이터베이스 오류: {0}")]
-    DatabaseError(#[from] sqlx::Error),
-    #[error("입력 오류: {0}")]
-    ValidationError(String),
-    #[error("데이터 없음:{0}")]
-    DataNotFoundError(String),
-    #[error("내부 서버 오류")]
-    InternalServerError,
+#[derive(Debug)]
+pub struct AppError {
+    pub message: String,
+    pub status_code: StatusCode,
+}
+
+impl AppError {
+    pub fn validation_error(message: String) -> Self {
+        Self {
+            message,
+            status_code: StatusCode::BAD_REQUEST,
+        }
+    }
+
+    pub fn database_error(message: String) -> Self {
+        Self {
+            message,
+            status_code: StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let status = match self {
-            AppError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            AppError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            AppError::DataNotFoundError(_) => StatusCode::NOT_FOUND,
-            AppError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-        };
-        let body = Json(json!({ "error": self.to_string() }));
-        (status, body).into_response()
+        (self.status_code, self.message).into_response()
+    }
+}
+
+impl From<sqlx::Error> for AppError {
+    fn from(error: sqlx::Error) -> Self {
+        Self::database_error(error.to_string())
+    }
+}
+
+impl From<Box<dyn std::error::Error + Send + Sync>> for AppError {
+    fn from(error: Box<dyn std::error::Error + Send + Sync>) -> Self {
+        Self::database_error(error.to_string())
     }
 }
