@@ -3,7 +3,7 @@ use axum::{
     response::Result,
     // response::{Response, Result},
     // routing::{delete, get, post, put},
-    Extension, 
+    extract::State,
     // Json, Router,
 };
 use dotenv::dotenv;
@@ -47,7 +47,7 @@ async fn main() -> Result<(), sqlx::Error> {
     let connection_manager = ConnectionManager::new();
 
     let app = routes::create_routes()
-        .layer(Extension(connection_manager))
+        .with_state(connection_manager)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))

@@ -5,8 +5,7 @@ use axum::{
     Router,
 };
 
-pub fn create_routes() -> Router {
+pub fn create_routes() -> Router<ConnectionManager> {
     Router::new()
         .route("/connect", post(create_connection))
-        .with_state(ConnectionManager::new())
 } 

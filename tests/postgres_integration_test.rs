@@ -3,15 +3,14 @@ use axum_ex::db::{
     connection_manager::ConnectionManager,
     types::{ConnectionInfo, DatabaseType, PoolOptions},
 };
-use std::sync::Arc;
 
 #[tokio::test]
-async fn test_mysql_connection() {
+async fn test_postgres_connection() {
     let manager = ConnectionManager::new();
 
     let connection_info = ConnectionInfo {
-        db_type: DatabaseType::MySQL,
-        connection_string: "mysql://root:dd@localhost:3306/test".to_string(),
+        db_type: DatabaseType::PostgreSQL,
+        connection_string: "postgres://admin:admin_password@localhost:5432/dvdrental".to_string(),
         username: None,
         password: None,
         pool_options: PoolOptions::default(),
@@ -19,16 +18,16 @@ async fn test_mysql_connection() {
 
     // Test connection creation
     let result = manager.add_connection(connection_info).await;
-    assert!(result.is_ok(), "Failed to create MySQL connection: {:?}", result.err());
+    assert!(result.is_ok(), "Failed to create PostgreSQL connection: {:?}", result.err());
 
     let connection_id = result.unwrap();
     
     // Test query execution
     let connection = manager.get_connection(&connection_id).await;
-    assert!(connection.is_some(), "Failed to get MySQL connection");
+    assert!(connection.is_some(), "Failed to get PostgreSQL connection");
     
     let query_result = connection.unwrap().execute_query("SELECT 1").await;
-    assert!(query_result.is_ok(), "Failed to execute MySQL query: {:?}", query_result.err());
+    assert!(query_result.is_ok(), "Failed to execute PostgreSQL query: {:?}", query_result.err());
 
     // Test connection removal
     manager.remove_connection(&connection_id).await;

@@ -4,8 +4,9 @@ mod sql_routes;
 mod user_routes; // 예시로 다른 라우트 모듈을 추가할 수 있음.
 
 use axum::Router;
+use crate::db::connection_manager::ConnectionManager;
 
-pub fn create_routes() -> Router {
+pub fn create_routes() -> Router<ConnectionManager> {
     Router::new()
         .merge(book_routes::create_routes())
         .merge(user_routes::create_routes())

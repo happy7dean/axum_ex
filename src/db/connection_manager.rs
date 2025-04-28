@@ -80,7 +80,7 @@ impl ConnectionManager {
 
     pub async fn get_connection(&self, id: &str) -> Option<Arc<DatabaseConnection>> {
         let connections = self.connections.read().await;
-        connections.get(id).map(|conn| Arc::new(conn.clone()))
+        connections.get(id).cloned().map(Arc::new)
     }
 
     pub async fn remove_connection(&self, id: &str) {
@@ -92,10 +92,9 @@ impl ConnectionManager {
 
     pub async fn with_connection<F, R>(&self, id: &str, f: F) -> Option<R>
     where
-        F: for<'a> FnOnce(&'a DatabaseConnection) -> R + 'static,
+        F: FnOnce(&Arc<DatabaseConnection>) -> R,
     {
         let connections = self.connections.read().await;
-        let conn = connections.get(id)?;
-        Some(f(conn))
+        connections.get(id).map(|conn| f(&Arc::new(conn.clone())))
     }
 } 

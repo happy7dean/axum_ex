@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  oracle:
+    image: gvenzl/oracle-xe:latest
+    environment:
+      - ORACLE_PASSWORD=oracle
+      - ORACLE_DATABASE=XE
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "sqlplus", "-L", "system/oracle@//localhost:1521/XE", "SELECT 1 FROM DUAL"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  oracle-data: 

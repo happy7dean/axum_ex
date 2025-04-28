@@ -29,7 +29,7 @@ impl Clone for DatabaseConnection {
 }
 
 #[async_trait]
-pub trait Connection: Send + Sync {
+pub trait Connection: Send + Sync + 'static {
     async fn execute_query(&self, query: &str) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error + Send + Sync>>;
     async fn close(&self);
 }
